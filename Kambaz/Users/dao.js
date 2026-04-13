@@ -1,32 +1,24 @@
-import Database from "../Database/index.js";
+import model from "./model.js";
+import { v4 as uuidv4 } from "uuid";
 
 export const createUser = (user) => {
-  const newUser = { ...user, _id: new Date().getTime().toString() };
-  Database.users = [...Database.users, newUser];
-  return newUser;
+  const newUser = { ...user, _id: uuidv4() };
+  return model.create(newUser);
 };
 
-export const findAllUsers = () => Database.users;
+export const findAllUsers = () => model.find();
 
-export const findUserById = (userId) =>
-  Database.users.find((u) => u._id === userId);
+export const findUsersByRole = (role) => model.find({ role: role });
+
+export const findUserById = (userId) => model.findById(userId);
 
 export const findUserByUsername = (username) =>
-  Database.users.find((u) => u.username === username);
+  model.findOne({ username: username });
 
 export const findUserByCredentials = (username, password) =>
-  Database.users.find(
-    (u) => u.username === username && u.password === password
-  );
+  model.findOne({ username, password });
 
-export const updateUser = (userId, user) => {
-  const { users } = Database;
-  const userToUpdate = users.find((u) => u._id === userId);
-  Object.assign(userToUpdate, user);
-  return userToUpdate;
-};
+export const updateUser = (userId, user) =>
+  model.updateOne({ _id: userId }, { $set: user });
 
-export const deleteUser = (userId) => {
-  const { users } = Database;
-  Database.users = users.filter((u) => u._id !== userId);
-};
+export const deleteUser = (userId) => model.deleteOne({ _id: userId });

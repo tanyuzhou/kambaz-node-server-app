@@ -4,11 +4,20 @@ import Lab5 from "./Lab5/index.js";
 import cors from "cors";
 import session from "express-session";
 import "dotenv/config";
+import mongoose from "mongoose";
 import CourseRoutes from "./Kambaz/Courses/routes.js";
 import ModuleRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 import UserRoutes from "./Kambaz/Users/routes.js";
+
+const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING;
+if (!CONNECTION_STRING) {
+  console.error("DATABASE_CONNECTION_STRING is not defined");
+  process.exit(1);
+}
+mongoose.connect(CONNECTION_STRING);
+
 const app = express();
 app.use(
   cors({

@@ -2,50 +2,57 @@ import * as dao from "./dao.js";
 import * as enrollmentsDao from "../Enrollments/dao.js";
 
 export default function UserRoutes(app) {
-  const createUser = (req, res) => {
-    const user = dao.createUser(req.body);
+  const createUser = async (req, res) => {
+    const user = await dao.createUser(req.body);
     res.json(user);
   };
 
-  const deleteUser = (req, res) => {
-    const status = dao.deleteUser(req.params.userId);
+  const deleteUser = async (req, res) => {
+    const status = await dao.deleteUser(req.params.userId);
     res.json(status);
   };
 
-  const findAllUsers = (req, res) => {
-    const users = dao.findAllUsers();
+  const findAllUsers = async (req, res) => {
+    const { role } = req.query;
+    if (role) {
+      const users = await dao.findUsersByRole(role);
+      res.json(users);
+      return;
+    }
+    const users = await dao.findAllUsers();
     res.json(users);
   };
 
-  const findUserById = (req, res) => {
-    const user = dao.findUserById(req.params.userId);
+  const findUserById = async (req, res) => {
+    const user = await dao.findUserById(req.params.userId);
     res.json(user);
   };
 
-  const updateUser = (req, res) => {
+  const updateUser = async (req, res) => {
     const userId = req.params.userId;
     const userUpdates = req.body;
-    const updatedUser = dao.updateUser(userId, userUpdates);
+    await dao.updateUser(userId, userUpdates);
+    const updatedUser = await dao.findUserById(userId);
     if (req.session["currentUser"] && req.session["currentUser"]._id === userId) {
       req.session["currentUser"] = updatedUser;
     }
     res.json(updatedUser);
   };
 
-  const signup = (req, res) => {
-    const user = dao.findUserByUsername(req.body.username);
+  const signup = async (req, res) => {
+    const user = await dao.findUserByUsername(req.body.username);
     if (user) {
       res.status(400).json({ message: "Username already in use" });
       return;
     }
-    const currentUser = dao.createUser(req.body);
+    const currentUser = await dao.createUser(req.body);
     req.session["currentUser"] = currentUser;
     res.json(currentUser);
   };
 
-  const signin = (req, res) => {
+  const signin = async (req, res) => {
     const { username, password } = req.body;
-    const currentUser = dao.findUserByCredentials(username, password);
+    const currentUser = await dao.findUserByCredentials(username, password);
     if (!currentUser) {
       res.status(401).json({ message: "Invalid credentials" });
       return;
@@ -68,17 +75,13 @@ export default function UserRoutes(app) {
     res.sendStatus(200);
   };
 
-  const findCoursesForUser = (req, res) => {
+  const findCoursesForUser = async (req, res) => {
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
       res.sendStatus(401);
       return;
     }
-    if (currentUser.role === "ADMIN") {
-      res.json(dao.findAllCourses());
-      return;
-    }
-    const enrollments = enrollmentsDao.findCoursesForUser(currentUser._id);
+    const enrollments = await enrollmentsDao.findCoursesForUser(currentUser._id);
     res.json(enrollments);
   };
 
